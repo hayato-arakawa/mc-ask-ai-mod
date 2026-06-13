@@ -1,26 +1,25 @@
 # Research Results
 
-## 1. Fabric Loom + Gradle setup (1.21.x)
+## 1. Fabric Loom + Gradle setup (1.21.11)
 
 | Item | Value |
 |---|---|
-| Minecraft | 1.21.1 (推奨) |
-| Loom plugin ID | `net.fabricmc.fabric-loom-remap` (1.21.x は難読化版なのでremap必要) |
-| Loom version | `1.16-SNAPSHOT` (最新の example mod 1.21 ブランチ) |
-| Loader version | `0.19.2` |
-| Fabric API | `0.102.0+1.21` |
-| Mappings | `loom.officialMojangMappings()` (Mojang公式推奨。Yarnは1.21.11で終了) |
+| Minecraft | 1.21.11 |
+| Loom plugin ID | `net.fabricmc.fabric-loom-remap` (難読化版のためremap必要) |
+| Loom version | `1.14-SNAPSHOT` |
+| Loader version | `0.18.2` |
+| Fabric API | `0.139.4+1.21.11` |
+| Mappings | `loom.officialMojangMappings()` |
 | Java | 21, `options.release = 21` |
-| Gradle | 9.2.1 (`gradle-wrapper.properties`) |
-| 公式テンプレート | https://fabricmc.net/develop/template/ |
-| 公式example | https://github.com/FabricMC/fabric-example-mod/tree/1.21 |
+| Gradle | 9.2.1 |
+| 公式example | https://github.com/FabricMC/fabric-example-mod/commit/86e800d48332f8d1adc67965d029ac816bc97626 |
 
 ## 2. Cloth Config + Mod Menu
 
-| Dependency | Maven coordinate | Version (1.21.1) |
+| Dependency | Maven coordinate | Version (1.21.11) |
 |---|---|---|
-| Cloth Config | `me.shedaniel.cloth:cloth-config-fabric` | `15.0.130+fabric` |
-| Mod Menu | `com.terraformersmc:modmenu` | `11.0.3` (推定, 要確認) |
+| Cloth Config | `me.shedaniel.cloth:cloth-config-fabric` | `21.11.153` |
+| Mod Menu | `com.terraformersmc:modmenu` | `17.0.0-beta.1` |
 
 **セットアップ:**
 
@@ -184,10 +183,11 @@ body.addProperty("model", model);
 ## 決定事項
 
 | 選択肢 | 決定 | 理由 |
-|---|---|---|
+|---|---|---|---|
+| Mod loader | Fabric 専用 (マルチローダー非対応) | Sinytra Connectorは1.21.11非対応のため |
 | HTTP client | Java 21 `HttpClient` | 依存ゼロ、CompletableFuture対応 |
 | JSON | Gson (Fabric API同梱) | 追加依存不要 |
 | ClickEvent | `SUGGEST_COMMAND` | ユーザーEnterまで実行しない要件 |
 | Mixin inject target | `addAdditionalButtons()` @TAIL | ボタン追加に最適 |
 | Mappings | Mojang公式 | Yarn終了予定のため将来性 |
-| Mod separation | シングルモジュール (`splitEnvironmentSourceSets`不要) | クライアント専用modのため |
+| Mod separation | シングルモジュール | クライアント専用mod、split不要 |

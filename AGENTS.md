@@ -2,17 +2,28 @@
 
 ## Project
 
-Minecraft Fabric mod (client-side, 1.21.x) that adds an AI chat assistant and command block helper.
+Minecraft Fabric mod (client-side, **1.21.11**) that adds an AI chat assistant and command block helper.
 
 ## Current state
 
-Greenfield — only `REQUIREMENTS.md` exists. No build files, no source, no CI.
+Greenfield — only docs exist. No build files, no source.
 
 ## Toolchain
 
-- **Build system**: Fabric Loom (Gradle) — project needs `fabric-loom` gradle plugin and Fabric mappings
-- **Required deps**: Fabric API, Mod Menu, Cloth Config, OkHttp or Java HttpClient
-- **Java target**: Java 21 (Minecraft 1.21.x)
+| Item | Value |
+|---|---|
+| Build system | Fabric Loom `1.14-SNAPSHOT` (`net.fabricmc.fabric-loom-remap`) |
+| Loader | `0.18.2` |
+| Fabric API | `0.139.4+1.21.11` |
+| Mappings | Mojang official (`loom.officialMojangMappings()`) |
+| Java | 21, `options.release = 21` |
+| Gradle | 9.2.1 |
+| Cloth Config | `21.11.153` |
+| Mod Menu | `17.0.0-beta.1` |
+| HTTP | JDK `java.net.http.HttpClient` (依存追加不要) |
+| JSON | Gson (Fabric API に同梱) |
+
+- Fabric API は依存に含めるが **コード内で直接参照しない** (Mixin・Screen・HTTP・JSONは全てバニラ範囲)
 
 ## Architecture (from REQUIREMENTS.md)
 
