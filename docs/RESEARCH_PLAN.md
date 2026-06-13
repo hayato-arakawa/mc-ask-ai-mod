@@ -53,6 +53,23 @@ dependencies {
 | 1.21.9-10 | v20.0.149 |
 | 1.21.11 | v21.11.151 |
 
+**Cloth Config builder pattern (Mojang mappings — `Component`を使う):**
+```java
+ConfigBuilder builder = ConfigBuilder.create()
+    .setParentScreen(parent)
+    .setTitle(Component.literal("Ask AI Mod Config"))
+    .setDefaultBackgroundTexture(ConfigBuilder.getDefaultBackgroundTexture());
+ConfigEntryBuilder entryBuilder = builder.entryBuilder();
+
+ConfigCategory general = builder.getOrCreateCategory(Component.literal("General"));
+general.addEntry(entryBuilder.startStrField(
+    Component.literal("API Endpoint"),
+    config.endpoint
+).setDefaultValue("https://api.openai.com/v1")
+ .setSaveConsumer(v -> config.endpoint = v)
+ .build());
+```
+
 ## 3. HTTP client (OkHttp vs Java HttpClient)
 
 **OkHttp:**
@@ -70,8 +87,10 @@ dependencies {
 
 **Inject対象: `CommandBlockScreen.addAdditionalButtons()`**
 
-```yaml
-# mixins/ask-ai-mod.mixins.json
+- クラス (Mojang): `net.minecraft.client.gui.screens.inventory.CommandBlockScreen`
+- 親クラス (Mojang): `net.minecraft.client.gui.screens.inventory.AbstractCommandBlockScreen`
+
+```json
 {
   "required": true,
   "package": "com.example.askaimod.mixin",
@@ -86,54 +105,78 @@ dependencies {
 ```
 
 ```java
-// CommandBlockScreen (extends AbstractCommandBlockScreen)
-// addAdditionalButtons() — ボタン追加に最適なフック
 @Mixin(CommandBlockScreen.class)
 public class CommandBlockScreenMixin {
     @Inject(method = "addAdditionalButtons", at = @At("TAIL"))
     private void addAiButton(CallbackInfo ci) {
-        // this は CommandBlockScreen
-        // ButtonWidget を追加
+        CommandBlockScreen self = (CommandBlockScreen) (Object) this;
+        // this.addRenderableWidget(Button.builder(...).build());
     }
 }
 ```
 
-Key observations from Yarn docs:
-- `CommandBlockScreen` has `modeButton`, `conditionalModeButton`, `redstoneTriggerButton` (private `CyclingButtonWidget`)
-- `addAdditionalButtons()` — ✅ 最適な注入ポイント
-- `updateCommandBlock()` — public, コマンド反映時に呼べる
-- `AbstractCommandBlockScreen` has `doneButton`, `commandSuggestor`
+Key observations:
+- `addAdditionalButtons()` — 最適な注入ポイント、`@At("TAIL")` で既存ボタンの後ろに追加
+- `updateCommandBlock()` — public, コマンドフィールド反映時に呼べる
+- 内部に `commandTextField` (EditBox) または `commandSuggestor` がある想定
+- Mixin設定ファイルは `resources/ask-ai-mod.mixins.json`
 
-## 5. Screen API (1.21.x)
+## 5. Screen API (1.21.x) — Mojang mappings
 
-**Clickable text pattern:**
+**重要: Yarn名とMojang名の差異**
+
+| Yarn名 | Mojang名 | インポート先 |
+|---|---|---|
+| `Text` | `Component` | `net.minecraft.network.chat.Component` |
+| `Text.literal()` | `Component.literal()` | |
+| `MutableText` | `MutableComponent` | `net.minecraft.network.chat.MutableComponent` |
+| `TextFieldWidget` | **`EditBox`** | `net.minecraft.client.gui.components.EditBox` |
+| `TextRenderer` | **`Font`** | `net.minecraft.client.gui.Font` |
+| `GuiGraphics` | `GuiGraphics`（同名） | `net.minecraft.client.gui.GuiGraphics` |
+| `Screen` | `Screen`（同名） | `net.minecraft.client.gui.screens.Screen` |
+| `Button` | `Button`（同名） | `net.minecraft.client.gui.components.Button` |
+| `ClickEvent` | `ClickEvent`（同名） | `net.minecraft.network.chat.ClickEvent` |
+| `Style` | `Style`（同名） | `net.minecraft.network.chat.Style` |
+
+**Clickable text pattern (Mojang):**
 ```java
-// SUGGEST_COMMAND: クリックでチャット入力欄に挿入 (実行はユーザーEnter)
 Style style = Style.EMPTY
     .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command))
-    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Click to use")));
+    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to use")));
 
-MutableText text = Text.literal("/command").setStyle(style);
+MutableComponent text = Component.literal("/command").setStyle(style);
 ```
 
 **重要:** `RUN_COMMAND` は即時実行、`SUGGEST_COMMAND` は入力欄に挿入。
 REQUIREMENTS.md の "ユーザーがEnterで実行" 要件には `SUGGEST_COMMAND` が合致。
 
-**Custom Screen:**
+**Custom Screen (Mojang):**
 ```java
 public class AiChatScreen extends Screen {
-    private TextFieldWidget inputField;
+    private EditBox inputField;
 
     @Override
-    public void init() {
-        inputField = new TextFieldWidget(textRenderer, x, y, width, height, Text.literal("Ask AI..."));
-        addDrawableChild(inputField);
+    protected void init() {
+        inputField = new EditBox(this.font, 40, 40, 200, 20, Component.literal("Ask AI..."));
+        addRenderableWidget(inputField);
+    }
+
+    @Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        super.render(graphics, mouseX, mouseY, delta);
     }
 }
 ```
 
-開き方: `client.setScreen(new AiChatScreen(Text.literal("AI Chat")))`
+開き方: `Minecraft.getInstance().setScreen(new AiChatScreen(Component.literal("AI Chat")))`
 チャット入力欄に展開: `client.setScreen(new ChatScreen(command))` または `SUGGEST_COMMAND` を使う
+
+**Confirm from Fabric docs source (`reference/1.21.11`):**
+- `Component.literal()` / `Component.empty()` / `Component.nullToEmpty()`
+- `Button.builder(text, callback).bounds(x, y, w, h).build()`
+- `this.addRenderableWidget(widget)`
+- `this.minecraft.getToastManager()` など
+- `graphics.drawString(this.font, string, x, y, color, shadow)`
 
 ## 6. OpenAI API contract
 

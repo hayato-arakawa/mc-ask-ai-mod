@@ -24,6 +24,7 @@ Greenfield — only docs exist. No build files, no source.
 | JSON | Gson (Fabric API に同梱) |
 
 - Fabric API は依存に含めるが **コード内で直接参照しない** (Mixin・Screen・HTTP・JSONは全てバニラ範囲)
+- **Mojang mappings 特有の名前**: `Text` → `Component`, `MutableText` → `MutableComponent`, `TextFieldWidget` → `EditBox`, `TextRenderer` → `Font`
 
 ## Architecture (from REQUIREMENTS.md)
 
