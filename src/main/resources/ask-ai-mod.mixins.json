@@ -1,0 +1,11 @@
+{
+    "required": true,
+    "package": "com.example.askaimod.mixin",
+    "compatibilityLevel": "JAVA_21",
+    "client": [
+        "CommandBlockScreenMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}
